@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flight Delay Risk Predictor</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: Arial, sans-serif; background: #f3f7fb; color: #1f2937; min-height: 100vh; display: flex; justify-content: center; padding: 32px 18px; }
+        .container { max-width: 840px; width: 100%; }
+        h1 { margin: 0 0 8px 0; font-size: 2rem; }
+        .subtitle { margin-bottom: 22px; color: #4b5563; font-size: 0.97rem; }
+        .card { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08); }
+        .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+        .field { display: flex; flex-direction: column; }
+        label { font-weight: 700; margin-bottom: 8px; font-size: 0.9rem; color: #374151; }
+        select { padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 10px; background: #f9fafb; font-size: 1rem; color: #111827; }
+        button { width: 100%; margin-top: 22px; padding: 14px 18px; border: none; border-radius: 10px; background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; font-size: 1rem; font-weight: 700; cursor: pointer; }
+        .result-box { margin-top: 26px; border-radius: 14px; padding: 16px 18px; background: #f8fafc; border: 1px solid #e2e8f0; }
+        .result-box h2 { margin: 0 0 14px 0; font-size: 1.15rem; }
+        .risk-bar { display: flex; height: 48px; overflow: hidden; border-radius: 10px; margin-bottom: 14px; }
+        .risk-delayed { background: #dc2626; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; }
+        .risk-ontime { background: #16a34a; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; }
+        .verdict { padding: 12px 14px; border-radius: 10px; font-weight: 700; margin-bottom: 12px; }
+        .verdict.high { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+        .verdict.low { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+        .evidence { font-size: 0.9rem; line-height: 1.6; color: #475569; }
+        .note { margin-top: 18px; color: #64748b; font-size: 0.8rem; line-height: 1.6; }
+        @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Flight Delay Risk Predictor</h1>
+        <p class="subtitle">Bayesian Network with 5 features, calibrated, decision threshold {{ threshold }}.</p>
+
+        <form class="card" method="post">
+            <div class="grid">
+                <div class="field">
+                    <label for="airline">Airline</label>
+                    <select id="airline" name="airline">
+                        {% for code in airline_codes %}
+                            <option value="{{ code }}" {% if evidence.get('AIRLINE') == code %}selected{% endif %}>{{ code }} - {{ airlines[code] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="season">Season</label>
+                    <select id="season" name="season">
+                        {% for s in seasons %}
+                            <option value="{{ s }}" {% if evidence.get('SEASON') == s %}selected{% endif %}>{{ s }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="sched_hour">Scheduled Departure Window</label>
+                    <select id="sched_hour" name="sched_hour">
+                        {% for hour in sched_hours %}
+                            <option value="{{ hour }}" {% if evidence.get('SCHED_HOUR') == hour %}selected{% endif %}>{{ hour }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="route_delay_history">Route Delay History</label>
+                    <select id="route_delay_history" name="route_delay_history">
+                        {% for level in route_delay_history_options %}
+                            <option value="{{ level }}" {% if evidence.get('ROUTE_DELAY_HISTORY') == level %}selected{% endif %}>{{ level }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="origin_congestion">Origin Congestion Level</label>
+                    <select id="origin_congestion" name="origin_congestion">
+                        {% for level in origin_congestion_levels %}
+                            <option value="{{ level }}" {% if evidence.get('ORIGIN_CONGESTION') == level %}selected{% endif %}>{{ level }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit">Predict Delay Risk</button>
+
+            {% if evidence.get('form_error') %}
+                <div class="verdict high">{{ evidence.get('form_error') }}</div>
+            {% endif %}
+            {% if result and result.get('error') %}
+                <div class="verdict high">{{ result.get('error') }}</div>
+            {% endif %}
+            {% if result and result.get('delayed_percent') is not none %}
+                <div class="result-box">
+                    <h2>Prediction Result</h2>
+                    <div class="risk-bar">
+                        <div class="risk-delayed" style="width: {{ result['delayed_percent'] }}%;">{{ '%.1f'|format(result['delayed_percent']) }}% Delay</div>
+                        <div class="risk-ontime" style="width: {{ result['ontime_percent'] }}%;">{{ '%.1f'|format(result['ontime_percent']) }}% On Time</div>
+                    </div>
+
+                    {% if result['decision'] == 'Delayed' %}
+                        <div class="verdict high">High risk: predicted delay probability is {{ '%.1f'|format(result['delayed_percent']) }}%.</div>
+                    {% else %}
+                        <div class="verdict low">Low risk: predicted on-time probability is {{ '%.1f'|format(result['ontime_percent']) }}%.</div>
+                    {% endif %}
+
+                    <div class="evidence">
+                        Airline: {{ evidence.get('AIRLINE') }}<br>
+                        Season: {{ evidence.get('SEASON') }}<br>
+                        Scheduled hour: {{ evidence.get('SCHED_HOUR') }}<br>
+                        Route delay history: {{ evidence.get('ROUTE_DELAY_HISTORY') }}<br>
+                        Origin congestion: {{ evidence.get('ORIGIN_CONGESTION') }}<br>
+                        Model: {{ result.get('model') }} | Decision threshold: {{ threshold }}
+                    </div>
+                </div>
+            {% endif %}
+        </form>
+
+        <p class="note">
+            Base Bayesian Network, calibrated with isotonic regression. Trained on days 1–20 and tested on days 21–31 of the same 2015 months.
+            Test AUC-ROC 0.66, F1 (Delayed) 0.35.
+        </p>
+    </div>
+</body>
+</html>

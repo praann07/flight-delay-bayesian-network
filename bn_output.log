@@ -1,0 +1,10 @@
+﻿python : Traceback (most recent call last):
+At line:1 char:360
++ ... op\PR PROJECT\PR PROJECT"; python train_v2.py --skip-gbm 2>&1 | Tee-O ...
++                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Traceback (most recent call last)::String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  File "C:\Users\Som Praneeth\Desktop\PR PROJECT\PR PROJECT\train_v2.py", line 30, in <module>
+    from pgmpy.estimators import HillClimbSearch
+ModuleNotFoundError: No module named 'pgmpy'

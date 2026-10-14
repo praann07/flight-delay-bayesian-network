@@ -1,0 +1,26 @@
+[
+  {
+    "case": "Peak hours, high congestion, high route delay history (AA)",
+    "raw_prob": 0.7110994764397905,
+    "calibrated_prob": 0.33552014995313967,
+    "decision": "ON-TIME"
+  },
+  {
+    "case": "Off-peak, low congestion, low route delay history (WN)",
+    "raw_prob": 0.5,
+    "calibrated_prob": 0.17839310031774852,
+    "decision": "ON-TIME"
+  },
+  {
+    "case": "Midday, moderate congestion, moderate route delay (UA)",
+    "raw_prob": 0.7435742537740528,
+    "calibrated_prob": 0.33552014995313967,
+    "decision": "ON-TIME"
+  },
+  {
+    "case": "Morning peak, early morning, fall, low delay history (DL)",
+    "raw_prob": 0.5,
+    "calibrated_prob": 0.17839310031774852,
+    "decision": "ON-TIME"
+  }
+]

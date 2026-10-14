@@ -1,0 +1,16 @@
+# Raw dataset (too large for git; see README for download instructions)
+archive(1).zip
+archive(1)/flights.csv
+
+# Archived/removed material (kept locally only, not part of the pushed project)
+_archived_gbm_v2/
+
+# Python
+__pycache__/
+*.pyc
+
+# Editor
+.vscode/
+
+# Local tooling artifacts
+.claude/
